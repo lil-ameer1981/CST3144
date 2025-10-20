@@ -3,6 +3,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <title>Vue Js Pet Depot</title>
         <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
+        <script src="products.js"></script>
     </head>
     <body>
         <div id="app">
@@ -15,20 +16,29 @@
               
             </header>
             <main>
-                <div v-if = 'showProduct'>
+        <div v-if = 'showProduct'>
+            <div v-for = "product in products">
                 <figure>
                     <img v-bind:src = 'product.image'>
                 </figure>
                 <h2 v-text = 'product.title'></h2>
                 <p v-text = 'product.description'></p>
                 <p>Price: {{product.price}}</p>
-                <button v-on:click = "addToCart" v-if = 'canAddToCart'>
+                <button v-on:click = 'addToCart (product)' v-if = 'canAddToCart (product)'>
                     Add to cart
                 </button>
-                <button disabled = 'disabled' v-else>
+                <span v-if = 'product.availableInventory === cartCount(product.id)'> All out!</span>
+                <span v-else-if = 'product.availableInventory - cartCount(product.id) < 5'> Only {{product.availableInventory - cartCount(product.id)}} left</span>
+                <span v-else> Buy Now!</span>
+                <!-- <button disabled = 'disabled' v-else>
                     Add to cart
-                </button>
+                </button> -->
+                <div>
+                    <span v-for = 'n in product.rating'>★</span>
+                    <span v-for = 'n in 5 - product.rating'>☆</span>
                 </div>
+            </div>
+        </div>
                 <div v-else>
                     <h2>Checkout</h2>
                     <p>
@@ -83,14 +93,16 @@
                 el: '#app',
                 data: {
                     sitename: "Vue.js Pet Depot",
-                    product: {
-                        id: 1000,
-                        title: "Cat Food, 28lb bag.",
-                        description: "The best and healthy cat food for your cat.",
-                        price: 5000,
-                        image:'Image/cat.png',
-                        availableInventory: 5
-                    },
+                    products: products,
+                    // {
+                    //     id: 1000,
+                    //     title: "Cat Food, 28lb bag.",
+                    //     description: "The best and healthy cat food for your cat.",
+                    //     price: 5000,
+                    //     image:'Image/cat.png',
+                    //     availableInventory: 10,
+                    //     rating: 3
+                    // },
                     cart: [],
                     showProduct: true,
 
@@ -115,17 +127,53 @@
 
                 },
                 computed: {
+                    sortedProducts(){
+                        function compare(a,b){
+                            if (a.price > b.price) return 1;
+                            if (a.price < b.price) return -1;
+                            return 0;
+                        }
+
+                        return this.products.sort(compare);
+                    },
+                    cartCount(id){
+                        let count = 0;
+                        for(let i = 0; i < this.cart.length; i++){
+                            if( this.cart[i] === id) {
+                                count++;
+                            }
+                        }
+                        return count;
+                    },
                     cartItemCount: function(){
                         return this.cart.length;
                     },
-                    canAddToCart: function (){
-                        return this.product.availableInventory > this.cartItemCount;
+                    canAddToCart (product) {
+                        return product.availableInventory > this.cartCount(product.id);
+                    },
+
+                    itemsLeft () {
+                        return this.product.availableInventory - this.cartItemCount;
+                    },
+
+                    sortedProducts(){
+                        let productsArray = this.products.slice(0);
+                        function compare(a,b){
+                            if (a.price > b.price)
+                            return 1;
+                            
+                            if (a.price < b.price)
+                            return -1;
+                        return 0;
+                        }
+                        return productsArray.sort(compare);
                     }
                 },
                 methods: {
-                    addToCart: function (){
-                        this.cart.push(this.product.id);
+                    addToCart(product){
+                        this.cart.push(product.id);
                     },
+                    
                     showCheckout(){
                         this.showProduct = this.showProduct ? false : true;
                     }, 
